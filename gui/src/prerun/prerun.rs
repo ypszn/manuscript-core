@@ -24,7 +24,7 @@ impl PreRun {
             api_endpoint: "https://testnet-debug.chainbasehq.com".to_string(),
             catalog_statement: r#"CREATE CATALOG paimon WITH ( 
                 'type' = 'paimon',
-                'warehouse' = 'webhdfs://hdfs-proxy.chainbasehq.com:80/warehouse',
+                'warehouse' = 'hdfs://chainbase-ali-sp-01/warehouse',
                 'table-default.merge-engine' = 'deduplicate',
                 'table-default.changelog-producer' = 'input',
                 'table-default.metastore.partitioned-table' = 'false',
@@ -39,7 +39,8 @@ impl PreRun {
                 'table-default.scan.plan-sort-partition' = 'true',
                 'table-default.snapshot.expire.limit' = '10000',
                 'table-default.snapshot.num.retained.max' = '2000'
-            );"#.to_string(),
+            );"#
+                .to_string(),
             un: "un".to_string(),
             pw: "pww".to_string(),
         }
@@ -68,7 +69,7 @@ impl PreRun {
         }
         let results = self.wait_for_results(&session_handle, &operation_handle).await?;
 
-        Ok(format!("Setup completed successfully. Results:\n{}", results))
+        Ok(format!("Setup completed successfully. Results(PageUp↑/Down↓ to scroll): \n{}", results))
     }
 
     async fn submit_sql_task(&self, sql: Option<&str>) -> Result<(String, String), String> {

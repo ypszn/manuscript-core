@@ -18,18 +18,24 @@ import (
 )
 
 const (
-	manuscriptBaseName   = "manuscripts"
-	manuscriptBaseDir    = "$HOME"
-	manuscriptConfig     = "$HOME/.manuscript_config.ini"
-	networkChainURL      = "https://api.chainbase.com"
-	networkChainEndpoint = "/api/v1/metadata/network_chains"
-	defaultDatabase      = "zkevm"
-	defaultTable         = "blocks"
-	defaultSink          = "postgres"
-	graphQLImage         = "repository.chainbase.com/manuscript-node/graphql-engine:latest"
-	graphQLARMImage      = "repository.chainbase.com/manuscript-node/graphql-engine-arm64:latest"
-	defaultPrimaryKey    = "block_number"
-	icpPrimaryKey        = "block_idx"
+	manuscriptBaseName    = "manuscripts"
+	manuscriptBaseDir     = "$HOME"
+	manuscriptConfig      = "$HOME/.manuscript_config.ini"
+	networkChainURL       = "https://api.chainbase.com"
+	msStudioURL           = "https://testnet.chainbase.com"
+	platformChainURL      = "https://console.chainbase.com"
+	networkChainEndpoint  = "/api/v1/metadata/network_chains"
+	platformChainEndpoint = "/api/v2/datacloud/metadata"
+	defaultDatabase       = "zkevm"
+	defaultTable          = "blocks"
+	defaultSink           = "postgres"
+	graphQLImage          = "repository.chainbase.com/manuscript-node/graphql-engine:latest"
+	graphQLARMImage       = "repository.chainbase.com/manuscript-node/graphql-engine-arm64:latest"
+	defaultPrimaryKey     = "block_number"
+	icpPrimaryKey         = "block_idx"
+	ckDir                 = "data/statuspoint/checkpoint"
+	spDir                 = "data/statuspoint/savepoint"
+	logDir                = "data/log"
 )
 
 func executeInitManuscript(ms pkg.Manuscript) {
@@ -69,7 +75,7 @@ func executeInitManuscript(ms pkg.Manuscript) {
 	}
 }
 
-// InitManuscript initializes a manuscript interactively
+// InitManuscriptInteractive initializes a manuscript interactively
 func InitManuscriptInteractive() {
 	// Check if manuscript config exists
 	baseDir := getHomeDir()
@@ -140,9 +146,13 @@ func InitManuscriptInteractive() {
 }
 
 func createDirectory(dir string) error {
-	err := os.MkdirAll(dir, 0755)
+	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+	err = os.Chmod(dir, 0777) // enforce writable by everyone
+	if err != nil {
+		return fmt.Errorf("failed to chmod directory %s: %w", dir, err)
 	}
 	return nil
 }
@@ -188,6 +198,7 @@ func createDockerComposeFile(dir string, ms *pkg.Manuscript) error {
 		var existingMs *pkg.Manuscript
 		for _, manuscript := range m.Manuscripts {
 			if manuscript.Name == ms.Name {
+				fmt.Printf("INFO: Manuscript: %s config exist:\n", manuscript.Name)
 				existingMs = &manuscript
 				break
 			}
@@ -212,6 +223,27 @@ func createDockerComposeFile(dir string, ms *pkg.Manuscript) error {
 		dockComposeTemplate = static.DockerComposeWithPostgresqlContent
 	default:
 	}
+	// create state dir
+	ckDirectory := fmt.Sprintf("%s/%s", dir, ckDir)
+	err := createDirectory(ckDirectory)
+	if err != nil {
+		return err
+	}
+	ms.CkDir = fmt.Sprintf("%s/%s", ".", ckDir)
+
+	spDirectory := fmt.Sprintf("%s/%s", dir, spDir)
+	err = createDirectory(spDirectory)
+	if err != nil {
+		return err
+	}
+	ms.SpDir = fmt.Sprintf("%s/%s", ".", spDir)
+
+	logDirectory := fmt.Sprintf("%s/%s", dir, logDir)
+	err = createDirectory(logDirectory)
+	if err != nil {
+		return err
+	}
+	ms.LogDir = fmt.Sprintf("%s/%s", ".", logDir)
 
 	return createTemplateFile(composeFilePath, dockComposeTemplate, ms)
 }

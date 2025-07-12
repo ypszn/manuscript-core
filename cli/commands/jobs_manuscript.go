@@ -1,15 +1,13 @@
 package commands
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
+	"manuscript-core/client"
 	"manuscript-core/pkg"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
+	"strconv"
 	"time"
 )
 
@@ -44,19 +42,8 @@ func formatDurationToMinutes(durationMs int64) string {
 
 func ListJobs(config *pkg.Config) {
 	_ = pkg.ExecuteStepWithLoading("Checking jobs", false, func() error {
-		// Step 1: Check for running Docker containers
-		dockers, err := getRunningContainers()
-		if err != nil {
-			return err
-		}
-
-		// Always show if no containers are running
-		if len(dockers) == 0 {
-			fmt.Println("\r📍 There are no jobs running...")
-		}
-
-		// Step 3: Check and display state for each manuscript
-		displayManuscriptStates(config.Manuscripts, dockers)
+		//Check and display state for each manuscript
+		displayManuscriptStates(config.Manuscripts)
 		return nil
 	})
 }
@@ -119,46 +106,38 @@ func getManuscriptsFromDirectory(dir string) ([]pkg.Manuscript, error) {
 	return manuscripts, nil
 }
 
+type JobStatusResponse struct {
+	Jobs []pkg.JobStatus `json:"jobs"`
+}
+
 // displayManuscriptStates checks and displays the state of each manuscript
-func displayManuscriptStates(manuscripts []pkg.Manuscript, dockers []pkg.ContainerInfo) {
+func displayManuscriptStates(manuscripts []pkg.Manuscript) {
 	for i, m := range manuscripts {
-		detector := pkg.NewStateDetector(&m, dockers)
-		state, err := detector.DetectState()
+		state, err := pkg.GetJobStatus(m)
 		if err != nil {
-			log.Printf("Warning: Failed to detect state for %s: %v", m.Name, err)
-			state = pkg.StateUnknown
+			log.Printf("ERROR:failed to get job status: %s", err)
+			continue
 		}
 
-		displayJobStatus(i+1, &m, state)
+		displayJobStatus(i+1, &m, *state)
 
-		if state == pkg.StateRunning {
+		//track tables
+		if *state == pkg.StateRunning && m.GraphQLPort != 0 {
 			// hasura metadata endpoint tracks tables
-			url := fmt.Sprintf("http://127.0.0.1:%d/v1/metadata", m.GraphQLPort)
-
-			payload := fmt.Sprintf(`{
-				"type": "bulk",
-				"source": "default", 
-				"resource_version": 1,
-				"args": [{
-					"type": "postgres_track_tables",
-					"args": {
-						"allow_warnings": true,
-						"tables": [{
-							"table": {
-								"name": "%s",
-								"schema": "public"
-							},
-							"source": "default"
-						}]
-					}
-				}]
-			}`, m.Table)
-
-			resp, err := http.Post(url, "application/json", strings.NewReader(payload))
-			if err != nil {
+			errTrack := client.TrackTable(strconv.Itoa(m.GraphQLPort), m.Table)
+			if errTrack != nil {
+				log.Printf("failed to track table:%s schema, %v", m.Table, errTrack)
+			}
+			schema, errSc := client.GetTableSchema(m.GraphQLPort, m.Table)
+			if errSc != nil {
+				log.Printf("failed to get table:%s schema, %v", m.Table, err)
+			}
+			m.Schema = schema
+			errSave := pkg.SaveConfig(manuscriptConfig, &pkg.Config{Manuscripts: []pkg.Manuscript{m}})
+			if errSave != nil {
+				fmt.Printf("Failed to save manuscript config: %v", err)
 				return
 			}
-			defer resp.Body.Close()
 		}
 	}
 }
@@ -166,15 +145,36 @@ func displayManuscriptStates(manuscripts []pkg.Manuscript, dockers []pkg.Contain
 func displayJobStatus(jobNumber int, m *pkg.Manuscript, state pkg.ManuscriptState) {
 	switch state {
 	case pkg.StateRunning:
-		fmt.Printf("\r🟢 %d: Manuscript: \033[32m%s\033[0m | State: \033[32m%s\033[0m | GraphQL: http://127.0.0.1:%d\n",
-			jobNumber, m.Name, state, m.GraphQLPort)
-	case pkg.StateInitializing:
-		fmt.Printf("\r🟡 %d: Manuscript: \033[34m%s\033[0m | State: \033[33m%s\033[0m\n",
+		if m.GraphQLPort == 0 {
+			fmt.Printf("\r🟢 %d: Manuscript: \033[32m%s\033[0m | State: \033[32m%s\033[0m\n",
+				jobNumber, m.Name, state)
+		} else {
+			fmt.Printf("\r🟢 %d: Manuscript: \033[32m%s\033[0m | State: \033[32m%s\033[0m | GraphQL: http://127.0.0.1:%d\n",
+				jobNumber, m.Name, state, m.GraphQLPort)
+		}
+
+	case pkg.StateCreating:
+		fmt.Printf("\r🟡 %d: Manuscript: \033[33m%s\033[0m | State: \033[33m%s\033[0m\n",
+			jobNumber, m.Name, state)
+	case pkg.StateNotStarted:
+		fmt.Printf("\r🟡 %d: Manuscript: \033[33m%s\033[0m | State: \033[33m%s\033[0m\n",
+			jobNumber, m.Name, state)
+	case pkg.StatePaused:
+		fmt.Printf("\r🔵 %d: Manuscript: \033[34m%s\033[0m | State: \033[34m%s\033[0m\n",
+			jobNumber, m.Name, state)
+	case pkg.StatePending:
+		fmt.Printf("\r🟠 %d: Manuscript: \033[38;5;208m%s\033[0m | State: \033[38;5;208m%s\033[0m\n",
 			jobNumber, m.Name, state)
 	case pkg.StateFailed:
-		fmt.Printf("\r🔴 %d: Manuscript: %s | State: \033[31m%s\033[0m\n",
+		fmt.Printf("\r🔴 %d: Manuscript: \u001B[31m%s\u001B[0m | State: \033[31m%s\033[0m\n",
 			jobNumber, m.Name, state)
-	case pkg.StateStopped:
+	case pkg.StatePartiallyRunning:
+		fmt.Printf("\r🔴 %d: Manuscript: \u001B[31m%s\u001B[0m | State: \033[31m%s\033[0m\n",
+			jobNumber, m.Name, state)
+	case pkg.StateUnknown:
+		fmt.Printf("\r🔴 %d: Manuscript: \u001B[31m%s\u001B[0m | State: \033[31m%s\033[0m\n",
+			jobNumber, m.Name, state)
+	case pkg.StateExited:
 		fmt.Printf("\r⚫ %d: Manuscript: %s | State: \033[90m%s\033[0m\n",
 			jobNumber, m.Name, state)
 	default:
@@ -222,57 +222,4 @@ func JobStop(jobName string) {
 		return nil
 	})
 	fmt.Printf("\rJob \033[33m%s\033[0m stopped successfully.\n", jobName)
-}
-
-func trackHasuraTable(jobName string) {
-	msConfig, err := pkg.LoadConfig(manuscriptConfig)
-	if err != nil {
-		log.Fatalf("Error: Failed to load manuscript config: %v", err)
-	}
-	ms, err := ParseManuscriptYaml(fmt.Sprintf("%s/%s/%s/manuscript.yaml", msConfig.BaseDir, manuscriptBaseName, jobName))
-	if err != nil {
-		log.Fatalf("Error: Failed to parse manuscript yaml: %v", err)
-	}
-	for _, sink := range ms.Sinks {
-		payload := Payload{
-			Type: "bulk",
-			Args: []Args{
-				{
-					Type: "pg_track_table",
-					Args: struct {
-						Source string `json:"source"`
-						Schema string `json:"schema"`
-						Name   string `json:"name"`
-					}{
-						Source: "default",
-						Schema: "public",
-						Name:   sink.Table,
-					},
-				},
-			},
-		}
-
-		payloadBytes, err := json.Marshal(payload)
-		if err != nil {
-			log.Println("Error marshalling payload:", err)
-		}
-
-		for _, m := range msConfig.Manuscripts {
-			if m.Name == jobName {
-				url := fmt.Sprintf("http://127.0.0.1:%d/v1/metadata", m.GraphQLPort)
-				req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
-				if err != nil {
-					log.Println("Error creating request:", err)
-				}
-				req.Header.Set("Content-Type", "application/json")
-
-				c := &http.Client{}
-				_, err = c.Do(req)
-				if err != nil {
-					return
-				}
-			}
-		}
-
-	}
 }

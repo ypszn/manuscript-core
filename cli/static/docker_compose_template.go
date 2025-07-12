@@ -4,40 +4,38 @@ var DockerComposeTemplate = `
 name: {{.Name}}
 services:
   jobmanager:
-    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.1.4
-	pull_policy: always
+    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.3.0
     user: "manuscript"
     environment:
       - |
         FLINK_PROPERTIES=
-        jobmanager.rpc.address: {{.Name}}-jobmanager-1
-    command: "standalone-job --job-classname com.chainbase.manuscript.ETLProcessor /opt/flink/manuscript.yaml --fromSavepoint /opt/flink/savepoint"
+        jobmanager.rpc.address: jobmanager
+    command: "standalone-job --job-classname com.chainbase.manuscript.ETLProcessor file:///opt/flink/manuscript.yaml --fromSavepoint /opt/flink/savepoint"
     ports:
       - "{{.Port}}:8081"
     volumes:
-      - ./data/statuspoint/checkpoint:/opt/flink/checkpoint
-      - ./data/statuspoint/savepoint:/opt/flink/savepoint
-      - ./data/log:/opt/flink/log
+      - {{ .CkDir }}:/opt/flink/checkpoint
+      - {{ .SpDir }}:/opt/flink/savepoint
+      - {{ .LogDir }}:/opt/flink/log
       - ./manuscript.yaml:/opt/flink/manuscript.yaml
     networks:
       - ms_network_{{ .Name }}
 
   taskmanager:
-    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.1.4
-	pull_policy: always
+    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.3.0
     user: "manuscript"
     environment:
       - |
         FLINK_PROPERTIES=
-        jobmanager.rpc.address: {{.Name}}-jobmanager-1
+        jobmanager.rpc.address: jobmanager
     depends_on:
       - jobmanager
     command: "taskmanager"
     scale: 1
     volumes:
-      - ./data/statuspoint/checkpoint:/opt/flink/checkpoint
-      - ./data/statuspoint/savepoint:/opt/flink/savepoint
-      - ./data/log:/opt/flink/log
+      - {{ .CkDir }}:/opt/flink/checkpoint
+      - {{ .SpDir }}:/opt/flink/savepoint
+      - {{ .LogDir }}:/opt/flink/log
       - ./manuscript.yaml:/opt/flink/manuscript.yaml
     networks:
       - ms_network_{{ .Name }}
@@ -49,42 +47,41 @@ var DockerComposeWithPostgresqlContent = `
 name: {{.Name}}
 services:
   jobmanager:
-    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.1.4
-    pull_policy: always
+    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.3.0
     user: "manuscript"
     environment:
       - |
         FLINK_PROPERTIES=
-        jobmanager.rpc.address: {{.Name}}-jobmanager-1
-    command: "standalone-job --job-classname com.chainbase.manuscript.ETLProcessor /opt/flink/manuscript.yaml --fromSavepoint /opt/flink/savepoint"
+        jobmanager.rpc.address: jobmanager
+    command: "standalone-job --job-classname com.chainbase.manuscript.ETLProcessor file:///opt/flink/manuscript.yaml --fromSavepoint /opt/flink/savepoint"
     ports:
       - "{{.Port}}:8081"
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      - ./data/statuspoint/checkpoint:/opt/flink/checkpoint
-      - ./data/statuspoint/savepoint:/opt/flink/savepoint
-      - ./data/log:/opt/flink/log
+      - {{ .CkDir }}:/opt/flink/checkpoint
+      - {{ .SpDir }}:/opt/flink/savepoint
+      - {{ .LogDir }}:/opt/flink/log
       - ./manuscript.yaml:/opt/flink/manuscript.yaml
     networks:
       - ms_network_{{ .Name }}
 
   taskmanager:
-    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.1.4
+    image: repository.chainbase.com/manuscript-node/manuscript-node:v1.3.0
     user: "manuscript"
     environment:
       - |
         FLINK_PROPERTIES=
-        jobmanager.rpc.address: {{.Name}}-jobmanager-1
+        jobmanager.rpc.address: jobmanager
     depends_on:
       - jobmanager
     command: "taskmanager"
     scale: 1
     volumes:
-      - ./data/statuspoint/checkpoint:/opt/flink/checkpoint
-      - ./data/statuspoint/savepoint:/opt/flink/savepoint
-      - ./data/log:/opt/flink/log
+      - {{ .CkDir }}:/opt/flink/checkpoint
+      - {{ .SpDir }}:/opt/flink/savepoint
+      - {{ .LogDir }}:/opt/flink/log
       - ./manuscript.yaml:/opt/flink/manuscript.yaml
     networks:
       - ms_network_{{ .Name }}
