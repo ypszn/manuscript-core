@@ -13,7 +13,7 @@
 [![GitHub Version](https://img.shields.io/github/tag-pre/chainbase-labs/manuscript-core?label=Version&color=1b1d24)](https://github.com/chainbase-labs/manuscript-core/releases)
 [![PyPI License](https://img.shields.io/pypi/l/quixstreams?label=Licence&color=1b1d24)](https://github.com/chainbase-labs/manuscript-core/blob/main/LICENSE)
 [![Docs](https://img.shields.io/badge/docs-chainbase.com-0345b2?label=Docs&color=1b1d24)](https://docs.chainbase.com/core-concepts/manuscript/overview#core-values-and-capabilities-of-manuscript)
-[![Discord](https://img.shields.io/badge/Chainbase-4c4293?logo=Discord&color=1b1d24)](https://discord.com/channels/933995010158907422/935156893872185344)
+[![Discord](https://img.shields.io/badge/Chainbase-4c4293?logo=Discord&color=1b1d24)](https://discord.com/invite/chainbase)
 [![Telegram](https://img.shields.io/badge/Chainbase-4c4293?logo=Telegram&color=1b1d24)](https://t.me/ChainbaseNetwork)
 <a href="https://x.com/chainbasehq" target="_blank" style="display: flex; align-items: center;">
 <img src="https://img.shields.io/badge/Twitter-1b1d24?logo=x&logoColor=white" alt="Twitter" />
@@ -44,6 +44,13 @@ The vision of Manuscript is to realize “data trade” within the Chainbase net
 
 - **Monetization**: Leveraging the data capabilities provided by Manuscript, combined with the dual-chain architecture CometBFT + DPoS high-performance instant transaction finality and proof-of-stake consensus features, Chainbase offers a fair and transparent data value exchange ecosystem. Creators can monetize their processed data through Manuscript, while data users can conveniently consume the data they need. This mechanism not only incentivizes the production of high-quality data but also promotes the positive development of the entire blockchain ecosystem.
 
+## 🔥 What's New（v1.5.0）
+The latest feature — Solana On-chain Parser — is now officially released.
+![solana0](./images/ms-1-5-0.png)
+![solana0](./images/ms-1-5-2.gif)
+![solana2](./images/ms-1-5-1.png)
+
+
 ## ✨ Videos
 <https://github.com/user-attachments/assets/80dfb1c2-3a4e-4e85-bd2b-12d5ca0b5639>
 
@@ -52,11 +59,33 @@ The vision of Manuscript is to realize “data trade” within the Chainbase net
 ## Getting Started 🏄
 ### Requirements
 [Docker Desktop 25.1+](https://www.docker.com/products/docker-desktop/)
+
+### GUI
+#### Install Manuscript Client
+```shell
+curl -fsSL  https://github.com/chainbase-labs/manuscript-core/raw/main/install-gui.sh | bash
+```
+
+![manuscript-gui](./images/manuscript_gui_1.jpg)
+
+#### Example
+
+Here's an example of how to <b>process</b> data from chainbase with manuscript:
+
+##### 1. Selecting data and creating local tasks
+
+![manuscript-gui](./images/manuscript_gui_2.jpg)
+
+##### 2. Waiting for the task to run and use the data
+
+![manuscript-gui](./images/manuscript_gui_3.jpg)
+
 ### CLI
 #### Install Manuscript Client
 ```shell
 curl -fsSL  https://github.com/chainbase-labs/manuscript-core/raw/main/install.sh | bash
 ```
+
 #### Example
 
 Here's an example of how to <b>process</b> data from chainbase with manuscript:
@@ -151,25 +180,6 @@ or
 manuscript-cli deploy ~/github/manuscript/demo/manuscript.yaml --env=chainbase
 ```
 
-### GUI
-![manuscript-gui](./images/manuscript_gui_1.jpg)
-#### Install Manuscript Client
-```shell
-curl -fsSL  https://github.com/chainbase-labs/manuscript-core/raw/main/install-gui.sh | bash
-```
-
-#### Example
-
-Here's an example of how to <b>process</b> data from chainbase with manuscript:
-
-##### 1. Selecting data and creating local tasks
-
-![manuscript-gui](./images/manuscript_gui_2.jpg)
-
-##### 2. Waiting for the task to run and use the data
-
-![manuscript-gui](./images/manuscript_gui_3.jpg)
-
 ### MAKE
 ```shell
 ➜  manuscript-core git:(main) ✗ make
@@ -256,14 +266,21 @@ Here are some of the planned improvements:
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/nebkoo">
+                    <img src="https://avatars.githubusercontent.com/u/46592476?v=4" width="100;" alt="nebkoo"/>
+                    <br />
+                    <sub><b>nebkoo</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
                 <a href="https://github.com/ypszn">
                     <img src="https://avatars.githubusercontent.com/u/110453347?v=4" width="100;" alt="ypszn"/>
                     <br />
                     <sub><b>ypszn</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
                 <a href="https://github.com/AlanViast">
                     <img src="https://avatars.githubusercontent.com/u/9742385?v=4" width="100;" alt="AlanViast"/>
@@ -286,12 +303,21 @@ Here are some of the planned improvements:
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/Olexandr88">
+                    <img src="https://avatars.githubusercontent.com/u/93856062?v=4" width="100;" alt="Olexandr88"/>
+                    <br />
+                    <sub><b>Olexandr88</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/Radovenchyk">
                     <img src="https://avatars.githubusercontent.com/u/107338472?v=4" width="100;" alt="Radovenchyk"/>
                     <br />
                     <sub><b>Radovenchyk</b></sub>
                 </a>
             </td>
+		</tr>
+		<tr>
             <td align="center">
                 <a href="https://github.com/jinmu0410">
                     <img src="https://avatars.githubusercontent.com/u/33084817?v=4" width="100;" alt="jinmu0410"/>
@@ -306,13 +332,11 @@ Here are some of the planned improvements:
                     <sub><b>linchizhen</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
-                <a href="https://github.com/nebkoo">
-                    <img src="https://avatars.githubusercontent.com/u/46592476?v=4" width="100;" alt="nebkoo"/>
+                <a href="https://github.com/rustfix">
+                    <img src="https://avatars.githubusercontent.com/u/155627174?v=4" width="100;" alt="rustfix"/>
                     <br />
-                    <sub><b>nebkoo</b></sub>
+                    <sub><b>rustfix</b></sub>
                 </a>
             </td>
             <td align="center">
