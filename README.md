@@ -259,17 +259,17 @@ Here are some of the planned improvements:
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/KagemniKarimu">
-                    <img src="https://avatars.githubusercontent.com/u/82295340?v=4" width="100;" alt="KagemniKarimu"/>
-                    <br />
-                    <sub><b>KagemniKarimu</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/nebkoo">
                     <img src="https://avatars.githubusercontent.com/u/46592476?v=4" width="100;" alt="nebkoo"/>
                     <br />
                     <sub><b>nebkoo</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/KagemniKarimu">
+                    <img src="https://avatars.githubusercontent.com/u/82295340?v=4" width="100;" alt="KagemniKarimu"/>
+                    <br />
+                    <sub><b>KagemniKarimu</b></sub>
                 </a>
             </td>
 		</tr>
